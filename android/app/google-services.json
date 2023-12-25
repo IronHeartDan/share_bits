@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "100550328101",
+    "project_id": "share-bits",
+    "storage_bucket": "share-bits.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100550328101:android:aee40eccc41403025324cc",
+        "android_client_info": {
+          "package_name": "com.zdem.share_bits"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxBcwjrFLKeJ3MjP3AlV3CACFRXVKETNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
