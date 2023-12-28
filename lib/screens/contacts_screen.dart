@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
@@ -45,7 +46,12 @@ class _ContactsScreenState extends State<ContactsScreen>
               return Center(
                 child: GestureDetector(
                     onTap: () {
-                      callController.testCall('9998082351');
+                      if (FirebaseAuth.instance.currentUser!.phoneNumber! ==
+                          "+917016783094") {
+                        callController.makeCall('9998082351');
+                      } else {
+                        callController.makeCall('7016783094');
+                      }
                     },
                     child: const Text("No Contacts")),
               );
@@ -56,7 +62,7 @@ class _ContactsScreenState extends State<ContactsScreen>
                 var contact = contacts[index];
                 return ListTile(
                   onTap: () {
-                    callController.testCall('7016783094');
+                    callController.makeCall('7016783094');
                   },
                   title: Text(
                     contact.displayName,

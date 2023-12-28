@@ -14,8 +14,9 @@ class CallScreen extends StatefulWidget {
 class _CallScreenState extends State<CallScreen>
     with AutomaticKeepAliveClientMixin {
   final callController = Get.find<CallController>();
-  late final RTCVideoRenderer _rtcVideoRenderer;
-  bool streamStarted = false;
+
+  late final RTCVideoRenderer _rtcVideoRendererLocal;
+  late final RTCVideoRenderer _rtcVideoRendererRemote;
 
   @override
   void initState() {
@@ -24,18 +25,26 @@ class _CallScreenState extends State<CallScreen>
   }
 
   void _initializeRTCVideoRenderer() async {
-    _rtcVideoRenderer = RTCVideoRenderer();
+    _rtcVideoRendererLocal = RTCVideoRenderer();
+    _rtcVideoRendererRemote = RTCVideoRenderer();
+    await _rtcVideoRendererLocal.initialize();
+    await _rtcVideoRendererRemote.initialize();
     await callController.startLocalStream();
-    await _rtcVideoRenderer.initialize();
-    _rtcVideoRenderer.srcObject = callController.localStream.value!;
+
     setState(() {
-      streamStarted = true;
+      _rtcVideoRendererLocal.srcObject = callController.localStream.value!;
+    });
+
+    ever(callController.remoteStream, (callback){
+      setState(() {
+        _rtcVideoRendererRemote.srcObject = callback!;
+      });
     });
   }
 
   @override
   void dispose() {
-    _rtcVideoRenderer.dispose();
+    _rtcVideoRendererLocal.dispose();
     callController.endLocalStream();
     super.dispose();
   }
@@ -43,27 +52,30 @@ class _CallScreenState extends State<CallScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Stack(
-      children: [
-        if (streamStarted)
-          GestureDetector(
-            onTap: () {
-              callController.isFullScreen.value =
-                  !callController.isFullScreen.value;
-            },
-            child: SizedBox(
-              width: double.infinity,
-              height: double.infinity,
-              child: RTCVideoView(_rtcVideoRenderer,
+    return Obx(() {
+      return Column(
+        children: [
+          if (callController.localStream.value != null)
+            Expanded(
+              child: RTCVideoView(_rtcVideoRendererLocal,
                   mirror: true,
                   objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                   placeholderBuilder: (context) => const Center(
                         child: CircularProgressIndicator(),
                       )),
             ),
-          ),
-      ],
-    );
+          if (callController.remoteStream.value != null)
+            Expanded(
+              child: RTCVideoView(_rtcVideoRendererRemote,
+                  mirror: true,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  placeholderBuilder: (context) => const Center(
+                        child: CircularProgressIndicator(),
+                      )),
+            ),
+        ],
+      );
+    });
   }
 
   @override

@@ -1,9 +1,9 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
 import 'package:share_bits/controllers/socket_controller.dart';
 import 'package:share_bits/services/web_rtc_service.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-
-import '../services/socket_service.dart';
 
 class CallState {
   static const String callIdle = 'IDLE';
@@ -22,42 +22,97 @@ class Callee {
 
 class CallController extends GetxController {
   final WebRtcService webRtcService = Get.find<WebRtcService>();
+  final SocketController socketController = Get.find<SocketController>();
 
-  RxList<MediaDeviceInfo> videoDevices = RxList<MediaDeviceInfo>();
+  late RxList<MediaDeviceInfo> videoDevices = RxList<MediaDeviceInfo>([]);
   Rx<MediaStream?> localStream = Rx<MediaStream?>(null);
+  Rx<MediaStream?> remoteStream = Rx<MediaStream?>(null);
+  late RTCPeerConnection peerConnection;
 
   RxString callState = CallState.callIdle.obs;
   RxBool isFullScreen = false.obs;
   RxString currentFacingMode = 'user'.obs;
   RxBool isVideoEnabled = true.obs;
   RxBool isAudioEnabled = true.obs;
-  Rx<Callee?> callee = Rx<Callee?>(null);
+  Rx<Callee?> callee = Callee(name: '', phone: '9998082351').obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    getMediaDevices();
-  }
-
-  void testCall(to) {
-    callState.value = CallState.callOutgoing;
-    var socketService = Get.find<SocketController>();
-    socketService.makeCall(to);
-  }
-
-  void answerCall() {
-    callState.value = CallState.callConnected;
-    var socketService = Get.find<SocketController>();
-    socketService.acceptCall(callee.value!.phone);
-  }
-
-  void endCall() {
-    callState.value = CallState.callEnded;
-    var socketService = Get.find<SocketController>();
-    socketService.declineCall(callee.value!.phone);
-    Future.delayed(const Duration(seconds: 2), () {
-      callState.value = CallState.callIdle;
+  Future initPeerConnection() async {
+    peerConnection = await webRtcService.createPeerConnection();
+    localStream.value!.getTracks().forEach((element) {
+      peerConnection.addTrack(element, localStream.value!);
     });
+  }
+
+  void initializeWebRTC(String type) async {
+    SocketController socketController = Get.find<SocketController>();
+    peerConnection.onIceCandidate = (candidate) {
+      socketController.sendIceCandidate({
+        'candidate': candidate.toMap(),
+        'to': callee.value!.phone,
+      });
+    };
+    peerConnection.onTrack = (event) {
+      log('//////////////////////////////////');
+      print('WEBRTC : onTrack');
+      log('//////////////////////////////////');
+    };
+    peerConnection.onAddStream = (stream) {
+      log('//////////////////////////////////');
+      print('WEBRTC : onAddStream');
+      log('//////////////////////////////////');
+      remoteStream.value = stream;
+    };
+    peerConnection.onRemoveStream = (stream) {
+      print('WEBRTC : onRemoveStream');
+    };
+    peerConnection.onIceConnectionState = (state) {
+      print('WEBRTC : onIceConnectionState : $state');
+    };
+    peerConnection.onIceGatheringState = (state) {
+      log('//////////////////////////////////');
+      print('WEBRTC : onIceGatheringState: $state');
+      log('//////////////////////////////////');
+    };
+    peerConnection.onSignalingState = (state) {
+      print('WEBRTC : onSignalingState : $state');
+    };
+    peerConnection.onConnectionState = (state) {
+      print('WEBRTC : onConnectionState : $state');
+    };
+    peerConnection.onDataChannel = (channel) {
+      print('WEBRTC : onDataChannel');
+    };
+    peerConnection.onRenegotiationNeeded = () {
+      print('WEBRTC : onRenegotiationNeeded');
+    };
+
+    if (type == SocketEvents.rtcOffer) {
+      var offer = await webRtcService.makeCallOffer(peerConnection);
+      socketController.sendOffer({
+        'offer': offer.toMap(),
+        'to': callee.value!.phone,
+      });
+    }
+
+    if (type == SocketEvents.rtcAnswer) {
+      var answer = await webRtcService.makeCallAnswer(peerConnection);
+      socketController.sendAnswer({
+        'answer': answer.toMap(),
+        'to': callee.value!.phone,
+      });
+    }
+  }
+
+  void addRemoteOffer(RTCSessionDescription offer) {
+    peerConnection.setRemoteDescription(offer);
+  }
+
+  void addRemoteAnswer(RTCSessionDescription answer) {
+    peerConnection.setRemoteDescription(answer);
+  }
+
+  void addRemoteCandidate(RTCIceCandidate candidate) {
+    peerConnection.addCandidate(candidate);
   }
 
   void getMediaDevices() async {
@@ -74,6 +129,26 @@ class CallController extends GetxController {
     isAudioEnabled.value = true;
     localStream.value =
         await webRtcService.getLocalStream(facingMode: currentFacingMode.value);
+  }
+
+  void makeCall(to) async {
+    callState.value = CallState.callOutgoing;
+    await initPeerConnection();
+    socketController.makeCall(to);
+  }
+
+  void answerCall() async {
+    callState.value = CallState.callConnected;
+    await initPeerConnection();
+    socketController.acceptCall(callee.value!.phone);
+  }
+
+  void endCall() {
+    callState.value = CallState.callEnded;
+    socketController.declineCall(callee.value!.phone);
+    Future.delayed(const Duration(seconds: 2), () {
+      callState.value = CallState.callIdle;
+    });
   }
 
   Future switchCamera() async {

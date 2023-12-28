@@ -32,7 +32,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // getToken();
     socketController.connectSocket(
-        FirebaseAuth.instance.currentUser!.phoneNumber!.substring(3));
+        FirebaseAuth.instance.currentUser!.phoneNumber!.substring(3),
+        callController);
+
     ever(socketController.socketConnected, (callback) {
       if (!socketController.socketConnected.value) {
         showTopSnackBar(
