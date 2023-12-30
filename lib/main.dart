@@ -1,13 +1,11 @@
 import 'dart:developer';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:share_bits/controllers/call_controller.dart';
 import 'package:share_bits/controllers/socket_controller.dart';
-import 'package:share_bits/screens/auth_screen.js.dart';
 import 'package:share_bits/services/socket_service.dart';
 import 'package:share_bits/services/web_rtc_service.dart';
 import 'firebase_options.dart';
@@ -87,11 +85,7 @@ class MyApp extends StatelessWidget {
           Get.put(SocketController());
           Get.put(CallController());
         }),
-        initialRoute:
-            FirebaseAuth.instance.currentUser == null ? '/auth' : '/home',
-        routes: {
-          '/home': (context) => const HomeScreen(),
-          '/auth': (context) => const AuthScreen(),
-        });
+        initialRoute: '/home',
+        routes: {'/home': (context) => const HomeScreen()});
   }
 }

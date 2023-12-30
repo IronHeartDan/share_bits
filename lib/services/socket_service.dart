@@ -15,6 +15,7 @@ class SocketService extends GetxService {
   late IO.Socket socket;
 
   String? getServer() {
+    // return "https://share-bits.onrender.com";
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:3000';
     }

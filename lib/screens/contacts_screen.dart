@@ -1,7 +1,8 @@
 import 'dart:developer';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../controllers/call_controller.dart';
@@ -43,17 +44,24 @@ class _ContactsScreenState extends State<ContactsScreen>
           } else {
             List<Contact> contacts = snapshot.data as List<Contact>;
             if (contacts.isEmpty) {
-              return Center(
-                child: GestureDetector(
-                    onTap: () {
-                      if (FirebaseAuth.instance.currentUser!.phoneNumber! ==
-                          "+917016783094") {
-                        callController.makeCall('9998082351');
-                      } else {
-                        callController.makeCall('7016783094');
-                      }
-                    },
-                    child: const Text("No Contacts")),
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: AspectRatio(
+                        aspectRatio: 1,
+                        child: SvgPicture.asset(
+                            'assets/images/asset_no_contacts.svg')),
+                  ),
+                  const Text(
+                    "No Contacts",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black),
+                  ),
+                ],
               );
             }
             return ListView.builder(
@@ -61,9 +69,7 @@ class _ContactsScreenState extends State<ContactsScreen>
               itemBuilder: (context, index) {
                 var contact = contacts[index];
                 return ListTile(
-                  onTap: () {
-                    callController.makeCall('7016783094');
-                  },
+                  onTap: () {},
                   title: Text(
                     contact.displayName,
                     style: const TextStyle(color: Colors.black),

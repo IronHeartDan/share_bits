@@ -1,4 +1,5 @@
 import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:share_bits/screens/profile_screen.dart';
 import 'package:share_bits/widgets/call_actions.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
+
 import '../controllers/call_controller.dart';
 import '../controllers/socket_controller.dart';
+import 'auth_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,10 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // getToken();
-    socketController.connectSocket(
-        FirebaseAuth.instance.currentUser!.phoneNumber!.substring(3),
-        callController);
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        socketController.connectSocket(
+            FirebaseAuth.instance.currentUser!.phoneNumber!.substring(3),
+            callController);
+      }
+    });
 
     ever(socketController.socketConnected, (callback) {
       if (!socketController.socketConnected.value) {
@@ -66,6 +72,21 @@ class _HomeScreenState extends State<HomeScreen> {
     if (token != null) log('token from home:$token');
   }
 
+  void showAuthModalSheet() {
+    Get.bottomSheet(
+      const AuthScreen(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20), topRight: Radius.circular(20))),
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+    );
+  }
+
+  void showProfileModalSheet() {
+    FirebaseAuth.instance.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -75,21 +96,25 @@ class _HomeScreenState extends State<HomeScreen> {
             duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
       },
       child: Scaffold(
-          appBar: currentPage != 0
-              ? AppBar(
-                  centerTitle: false,
-                  title: const Text("Share Bits"),
-                  elevation: 10,
-                  actions: [
-                    IconButton(
-                        onPressed: () async {
-                          await FirebaseAuth.instance.signOut();
-                          Get.offAllNamed('/auth');
-                        },
-                        icon: const Icon(Icons.logout))
-                  ],
-                )
-              : null,
+          resizeToAvoidBottomInset: false,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            centerTitle: false,
+            title: currentPage != 0 ? const Text("Share Bits") : null,
+            elevation: currentPage != 0 ? 5 : 0,
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    FirebaseAuth.instance.currentUser == null
+                        ? showAuthModalSheet()
+                        : showProfileModalSheet();
+                  },
+                  icon: const Icon(
+                    Icons.account_circle_outlined,
+                    color: Colors.black,
+                  ))
+            ],
+          ),
           body: PageView(
             physics: const NeverScrollableScrollPhysics(),
             controller: pageController,
