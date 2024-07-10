@@ -1,9 +1,9 @@
 import 'dart:developer';
 
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:share_bits/controllers/socket_controller.dart';
 import 'package:share_bits/services/web_rtc_service.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class CallState {
   static const String callIdle = 'IDLE';

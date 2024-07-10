@@ -38,6 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
         socketController.connectSocket(
             FirebaseAuth.instance.currentUser!.phoneNumber!.substring(3),
             callController);
+      } else {
+        socketController.disconnectSocket();
       }
     });
 
@@ -84,7 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void showProfileModalSheet() {
-    FirebaseAuth.instance.signOut();
+    Get.bottomSheet(
+      const ProfileScreen(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20), topRight: Radius.circular(20))),
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+    );
   }
 
   @override
@@ -98,21 +107,22 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
           resizeToAvoidBottomInset: false,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
             centerTitle: false,
-            title: currentPage != 0 ? const Text("Share Bits") : null,
+            title: currentPage != 0
+                ? const Text("Connections")
+                : const Text("Share Bits"),
             elevation: currentPage != 0 ? 5 : 0,
             actions: [
               IconButton(
-                  onPressed: () {
-                    FirebaseAuth.instance.currentUser == null
-                        ? showAuthModalSheet()
-                        : showProfileModalSheet();
-                  },
-                  icon: const Icon(
-                    Icons.account_circle_outlined,
-                    color: Colors.black,
-                  ))
+                onPressed: () {
+                  FirebaseAuth.instance.currentUser == null
+                      ? showAuthModalSheet()
+                      : showProfileModalSheet();
+                },
+                icon: const CircleAvatar(
+                  child: Icon(Icons.person),
+                ),
+              )
             ],
           ),
           body: PageView(
@@ -139,9 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return FloatingActionButton.extended(
               onPressed: () {
                 if (currentPage == 0) {
-                  pageController.animateToPage(1,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeIn);
+                  pageController.jumpToPage(1);
                 } else {
                   pageController.animateToPage(0,
                       duration: const Duration(milliseconds: 200),

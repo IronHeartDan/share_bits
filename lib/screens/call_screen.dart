@@ -21,7 +21,7 @@ class _CallScreenState extends State<CallScreen>
   @override
   void initState() {
     super.initState();
-    _initializeRTCVideoRenderer();
+    // _initializeRTCVideoRenderer();
   }
 
   void _initializeRTCVideoRenderer() async {

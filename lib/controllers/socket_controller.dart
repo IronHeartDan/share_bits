@@ -3,9 +3,9 @@ import 'dart:developer';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
-import '../services/socket_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import '../services/socket_service.dart';
 import 'call_controller.dart';
 
 const JsonEncoder encoder = JsonEncoder();
@@ -30,12 +30,12 @@ class SocketController extends GetxController {
     this.callController = callController;
 
     socketService.connectSocket(phone);
-    socketService.socket.onConnect((_) {
+    socketService.socket?.onConnect((_) {
       socketConnected.value = true;
     });
 
     // Listen for incoming calls
-    socketService.socket.on(SocketEvents.call, (data) {
+    socketService.socket?.on(SocketEvents.call, (data) {
       Map<String, dynamic> decodedData = decoder.convert(data);
       callController.callee.value =
           Callee(name: '', phone: decodedData['from']);
@@ -43,13 +43,13 @@ class SocketController extends GetxController {
     });
 
     // Listen for call accepted
-    socketService.socket.on(SocketEvents.callAccepted, (data) {
+    socketService.socket?.on(SocketEvents.callAccepted, (data) {
       callController.callState.value = CallState.callConnected;
       callController.initializeWebRTC(SocketEvents.rtcOffer);
     });
 
     // Listen for call declined
-    socketService.socket.on(SocketEvents.callDeclined, (data) {
+    socketService.socket?.on(SocketEvents.callDeclined, (data) {
       callController.callState.value = CallState.callEnded;
       Future.delayed(const Duration(seconds: 2), () {
         callController.callState.value = CallState.callIdle;
@@ -57,7 +57,7 @@ class SocketController extends GetxController {
     });
 
     // Listen for rtc offer
-    socketService.socket.on(SocketEvents.rtcOffer, (data) {
+    socketService.socket?.on(SocketEvents.rtcOffer, (data) {
       log('WEBRTC : rtcOffer Received');
       Map<String, dynamic> decodedData = decoder.convert(data);
       Map<String, dynamic> offer = decodedData['offer'];
@@ -67,7 +67,7 @@ class SocketController extends GetxController {
     });
 
     // Listen for rtc answer
-    socketService.socket.on(SocketEvents.rtcAnswer, (data) {
+    socketService.socket?.on(SocketEvents.rtcAnswer, (data) {
       log('WEBRTC : rtcAnswer Received');
       Map<String, dynamic> decodedData = decoder.convert(data);
       Map<String, dynamic> answer = decodedData['answer'];
@@ -76,7 +76,7 @@ class SocketController extends GetxController {
     });
 
     // Listen for ice candidate
-    socketService.socket.on(SocketEvents.iceCandidate, (data) {
+    socketService.socket?.on(SocketEvents.iceCandidate, (data) {
       log('WEBRTC : iceCandidate Received');
       Map<String, dynamic> decodedData = decoder.convert(data);
       Map<String, dynamic> candidate = decodedData['candidate'];
@@ -84,36 +84,37 @@ class SocketController extends GetxController {
           candidate['sdpMid'], candidate['sdpMLineIndex']));
     });
 
-    socketService.socket.onDisconnect((_) {
+    socketService.socket?.onDisconnect((_) {
       socketConnected.value = false;
     });
   }
 
   void makeCall(String to) {
-    socketService.socket.emit(SocketEvents.call, to);
+    socketService.socket?.emit(SocketEvents.call, to);
   }
 
   void acceptCall(String to) {
-    socketService.socket.emit(SocketEvents.callAccepted, to);
+    socketService.socket?.emit(SocketEvents.callAccepted, to);
   }
 
   void declineCall(String to) {
-    socketService.socket.emit(SocketEvents.callDeclined, to);
+    socketService.socket?.emit(SocketEvents.callDeclined, to);
   }
 
   void sendOffer(data) {
-    socketService.socket.emit(SocketEvents.rtcOffer, encoder.convert(data));
+    socketService.socket?.emit(SocketEvents.rtcOffer, encoder.convert(data));
   }
 
   void sendAnswer(data) {
-    socketService.socket.emit(SocketEvents.rtcAnswer, encoder.convert(data));
+    socketService.socket?.emit(SocketEvents.rtcAnswer, encoder.convert(data));
   }
 
   void sendIceCandidate(data) {
-    socketService.socket.emit(SocketEvents.iceCandidate, encoder.convert(data));
+    socketService.socket
+        ?.emit(SocketEvents.iceCandidate, encoder.convert(data));
   }
 
   void disconnectSocket() {
-    socketService.socket.disconnect();
+    socketService.disconnectSocket();
   }
 }
